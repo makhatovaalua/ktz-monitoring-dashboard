@@ -5,22 +5,40 @@ import plotly.graph_objects as go
 from sqlalchemy import create_engine, text
 from datetime import datetime
 import numpy as np
+import urllib.parse
 
 # ========== ПОДКЛЮЧЕНИЕ К SUPABASE ==========
-# Данные будут из Streamlit Secrets
-DB_HOST = st.secrets["DB_HOST"]
-DB_PORT = st.secrets["DB_PORT"]
-DB_NAME = st.secrets["DB_NAME"]
-DB_USER = st.secrets["DB_USER"]
-DB_PASSWORD = st.secrets["DB_PASSWORD"]
-
-DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+# Получаем данные из Secrets
+try:
+    DB_HOST = st.secrets["DB_HOST"]
+    DB_PORT = st.secrets["DB_PORT"]
+    DB_NAME = st.secrets["DB_NAME"]
+    DB_USER = st.secrets["DB_USER"]
+    DB_PASSWORD = st.secrets["DB_PASSWORD"]
+    
+    # Экранируем пароль (на случай спецсимволов)
+    DB_PASSWORD_ESCAPED = urllib.parse.quote_plus(DB_PASSWORD)
+    
+    DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD_ESCAPED}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    
+except Exception as e:
+    st.error(f"Error reading secrets: {e}")
+    st.stop()
 
 @st.cache_resource
 def init_connection():
-    return create_engine(DATABASE_URL)
+    try:
+        engine = create_engine(DATABASE_URL, connect_args={"connect_timeout": 10})
+        # Проверяем подключение
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return engine
+    except Exception as e:
+        st.error(f"Database connection failed: {e}")
+        st.stop()
 
 engine = init_connection()
+st.success("✅ Connected to Supabase successfully!")
 
 # ========== ЗАГРУЗКА ДАННЫХ ==========
 @st.cache_data(ttl=30)
