@@ -7,9 +7,9 @@ Original file is located at
     https://colab.research.google.com/drive/1Qfpn_E2LgPXdk76Rd2i76RvRk3DSM3x9
 """
 
-!pip install psycopg2-binary pandas numpy matplotlib seaborn sqlalchemy psycopg2
 
-!pip install psycopg2-binary sqlalchemy pandas
+
+
 
 from sqlalchemy import create_engine, text
 import pandas as pd
